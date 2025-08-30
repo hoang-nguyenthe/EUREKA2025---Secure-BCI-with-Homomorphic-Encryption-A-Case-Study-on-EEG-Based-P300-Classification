@@ -1,0 +1,2 @@
+model,auc_test,thr_opt,acc_thr05,bal_acc_thr05,f1_pos_thr05,acc_thropt,bal_acc_thropt,f1_pos_thropt
+LDA,0.660098,0.092126,0.904673,0.501121,0.006452,0.628598,0.615649,0.234205
