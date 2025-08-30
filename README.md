@@ -1,2 +1,2 @@
-# EUREKA2025---Secure-BCI-with-Homomorphic-Encryption-A-Case-Study-on-EEG-Based-P300-Classification
+# EUREKA2025-Secure BCI with Homomorphic Encryption: A Case Study on EEG Based P300 Classification
 This work integrates homomorphic encryption into brain-computer interfaces for privacy-preserving EEG analysis. On the bigP3BCI dataset with P300 signals, we test time-window and xDAWN features using LDA. Paillier HE achieves identical accuracy and AUC as plaintext, ensuring both security and performance.
