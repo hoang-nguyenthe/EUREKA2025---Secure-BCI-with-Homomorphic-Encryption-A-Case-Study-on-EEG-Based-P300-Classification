@@ -158,6 +158,29 @@ This will generate:
 - (Re)generates `artifacts/summary_all.md`
 
 ---
+### A) Consolidated HE vs plaintext (from `artifacts/summary_all.md` for A_01)
+
+| Model | N | Keybits | AUC_plain | ACC_plain@opt | AUC_HE | ACC_HE@opt | Time/sample (s) |
+|:--|--:|--:|--:|--:|--:|--:|--:|
+| LDA | 64  | 2048 | 0.7410 | 0.7031 | 0.7410 | 0.7031 | 7.043 |
+| LDA | 64  | 3072 | 0.7410 | 0.7031 | 0.7410 | 0.7031 | 29.632 |
+| LDA | 128 | 2048 | 0.6667 | 0.6562 | 0.6667 | 0.6562 | 7.082 |
+| LDA | 256 | 2048 | 0.6003 | 0.6016 | 0.6003 | 0.6016 | 8.778 |
+
+**Takeaways:**
+- HE **matches plaintext** AUC/ACC (as expected for linear models).
+- Latency grows with Paillier key size (2048 → 3072) and with feature dimension.
+
+### B) xDAWN LDA – demo timings (from console logs for A_01)
+
+| Keybits | AUC_plain | ACC_plain@opt | AUC_HE | ACC_HE@opt | Time/sample (s) |
+|:--:|:--:|:--:|:--:|:--:|--:|
+| 1024 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | ~0.402 |
+| 2048 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | ~2.802 |
+| 3072 | 1.0000 | 1.0000 | 1.0000 | 1.0000 | ~9.054 |
+
+> These values come from `demo_infer.py`/`he_infer_paillier_artifacts.py` runs on `inputs/SE001_xdawn` with `runs/xdawn_cv` (best model: LDA) for **A_01**.
+
 
 ## 📊 Results (from `artifacts/summary_all.md`)
 
