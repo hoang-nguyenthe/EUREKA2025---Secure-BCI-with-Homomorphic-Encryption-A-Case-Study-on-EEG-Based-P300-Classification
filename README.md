@@ -195,15 +195,15 @@ Below are the visual results that demonstrate the performance of our models:
 
 - **AUC vs Keybits:**
 
-![AUC vs Keybits](artifacts/auc_vs_keybits.png)
+![AUC vs Keybits](artifacts/summary/auc_vs_keybits.png)
 
 - **Average Confusion Matrix:**
 
-![Average Confusion Matrix](artifacts/average_confusion_matrix.png)
+![Average Confusion Matrix](artifacts/summary/average_confusion_matrix.png)
 
 - **Time Per Sample vs Keybits:**
 
-![Time Per Sample vs Keybits](artifacts/time_per_sample_vs_keybits.png)
+![Time Per Sample vs Keybits](artifacts/summary/time_per_sample_vs_keybits.png)
 
 ---
 
