@@ -180,6 +180,32 @@ This will generate:
 | A_19    | 0.9064   | 0.5530    | 0.0596 | 0.108    | [[11641, 59], [1151, 73]]       | 0    |
 
 ---
+## 📊 **Summary Results for all A_xx**
+
+- **Average Accuracy:** 0.8527
+- **Average Precision:** 0.4762
+- **Average Recall:** 0.2259
+- **Average F1 Score:** 0.1835
+- **Average AUC:** 0.5721
+- **Average Time Per Sample:** 1.0000s
+
+### 📈 **Visual Results**
+
+Below are the visual results that demonstrate the performance of our models:
+
+- **AUC vs Keybits:**
+
+![AUC vs Keybits](artifacts/auc_vs_keybits.png)
+
+- **Average Confusion Matrix:**
+
+![Average Confusion Matrix](artifacts/average_confusion_matrix.png)
+
+- **Time Per Sample vs Keybits:**
+
+![Time Per Sample vs Keybits](artifacts/time_per_sample_vs_keybits.png)
+
+---
 
 ## 🛡️ Privacy & threat model
 
