@@ -1,8 +1,11 @@
-# Tổng hợp kết quả HE vs plaintext
+# Summary Results for All A_xx
 
-| model | N | keybits | AUC_plain | ACC_plain@opt | AUC_HE | ACC_HE@opt | time/sample (s) |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| LDA | 64 | 2048 | 0.7410 | 0.7031 | 0.7410 | 0.7031 | 7.043 |
-| LDA | 64 | 3072 | 0.7410 | 0.7031 | 0.7410 | 0.7031 | 29.632 |
-| LDA | 128 | 2048 | 0.6667 | 0.6562 | 0.6667 | 0.6562 | 7.082 |
-| LDA | 256 | 2048 | 0.6003 | 0.6016 | 0.6003 | 0.6016 | 8.778 |
+| Subject   | Accuracy   | Precision   | Recall   | F1-score   | Confusion Matrix   | AUC   |
+|-----------|------------|-------------|----------|------------|--------------------|-------|
+
+### Average Results
+- Average Accuracy: nan
+- Average Precision: nan
+- Average Recall: nan
+- Average F1-score: nan
+- Average AUC: nan
