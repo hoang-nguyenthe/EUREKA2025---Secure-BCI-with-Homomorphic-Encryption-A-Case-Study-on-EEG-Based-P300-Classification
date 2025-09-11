@@ -1,0 +1,13 @@
+Confusion Matrix for A_19:
+[[11641    59]
+ [ 1151    73]]
+
+Classification Report for A_19:
+              precision    recall  f1-score   support
+
+           0       0.91      0.99      0.95     11700
+           1       0.55      0.06      0.11      1224
+
+    accuracy                           0.91     12924
+   macro avg       0.73      0.53      0.53     12924
+weighted avg       0.88      0.91      0.87     12924

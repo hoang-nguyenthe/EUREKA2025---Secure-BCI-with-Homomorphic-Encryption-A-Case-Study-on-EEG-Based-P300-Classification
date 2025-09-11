@@ -1,0 +1,13 @@
+Confusion Matrix for A_02:
+[[11556   144]
+ [  896   328]]
+
+Classification Report for A_02:
+              precision    recall  f1-score   support
+
+           0       0.93      0.99      0.96     11700
+           1       0.69      0.27      0.39      1224
+
+    accuracy                           0.92     12924
+   macro avg       0.81      0.63      0.67     12924
+weighted avg       0.91      0.92      0.90     12924

@@ -1,0 +1,13 @@
+Confusion Matrix for A_04:
+[[11618    82]
+ [ 1055   169]]
+
+Classification Report for A_04:
+              precision    recall  f1-score   support
+
+           0       0.92      0.99      0.95     11700
+           1       0.67      0.14      0.23      1224
+
+    accuracy                           0.91     12924
+   macro avg       0.80      0.57      0.59     12924
+weighted avg       0.89      0.91      0.88     12924

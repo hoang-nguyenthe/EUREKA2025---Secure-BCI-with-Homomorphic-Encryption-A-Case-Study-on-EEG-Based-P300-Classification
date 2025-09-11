@@ -1,0 +1,13 @@
+Confusion Matrix for A_07:
+[[8278 3422]
+ [ 326  898]]
+
+Classification Report for A_07:
+              precision    recall  f1-score   support
+
+           0       0.96      0.71      0.82     11700
+           1       0.21      0.73      0.32      1224
+
+    accuracy                           0.71     12924
+   macro avg       0.58      0.72      0.57     12924
+weighted avg       0.89      0.71      0.77     12924
