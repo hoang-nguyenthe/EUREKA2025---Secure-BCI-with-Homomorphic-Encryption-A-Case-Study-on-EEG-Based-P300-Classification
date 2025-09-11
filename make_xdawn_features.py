@@ -1,13 +1,19 @@
-import os, glob, json, argparse
+import os
+import glob
+import json
+import argparse
 from pathlib import Path
-import numpy as np, mne
+import numpy as np
+import mne
 from mne.preprocessing import Xdawn
 
 def edf_list(session_dir, phase):
+    """Tìm tất cả các tệp EDF trong thư mục session và phase cụ thể"""
     return sorted(glob.glob(os.path.join(session_dir, phase, "**", "*.edf"), recursive=True))
 
-def build_epochs(edf_files, resample=256.0, tmin=-0.2, tmax=0.8, baseline=(-0.2,0.0),
-                 notch=(50,), bp=(0.1,15.0), decim=1, max_epochs=None, max_files=None):
+def build_epochs(edf_files, resample=256.0, tmin=-0.2, tmax=0.8, baseline=(-0.2, 0.0),
+                 notch=(50,), bp=(0.1, 15.0), decim=1, max_epochs=None, max_files=None):
+    """Xử lý dữ liệu từ tệp EDF để tạo epochs"""
     Xs, ys, info_ref = [], [], None
     n_total = 0
     for i, f in enumerate(edf_files):
@@ -75,6 +81,7 @@ def build_epochs(edf_files, resample=256.0, tmin=-0.2, tmax=0.8, baseline=(-0.2,
     return X, y, info_ref, ep.tmin, float(info_ref['sfreq'])
 
 def feats_from_epo(E, n_comp, tmin_epo, sfreq, t0=0.0, t1=0.6, win=0.15, step=0.15):
+    """Trích xuất các đặc trưng 64 từ dữ liệu EEG"""
     start = int((t0 - tmin_epo)*sfreq)
     end   = int((t1 - tmin_epo)*sfreq)
     w     = int(win*sfreq)
@@ -110,53 +117,62 @@ def main():
 
     out = Path(args.outdir); out.mkdir(parents=True, exist_ok=True)
 
-    tr_list = edf_list(args.session, "Train")
-    te_list = edf_list(args.session, "Test")
-    if not tr_list or not te_list:
-        raise RuntimeError(f"Không thấy EDF Train/Test trong {args.session}")
+    # Danh sách các thư mục A_xx từ A_01 đến A_19
+    subject_dirs = [f"A_{str(i).zfill(2)}" for i in range(1, 20)]  # A_01 đến A_19
 
-    Xtr_raw, ytr, info, tmin_epo, sf = build_epochs(tr_list, decim=args.decim,
-        max_epochs=args.max_epochs_train, max_files=args.max_files_train)
-    Xte_raw, yte, _, _, _ = build_epochs(te_list, decim=args.decim,
-        max_epochs=args.max_epochs_test,  max_files=args.max_files_test)
+    # Lặp qua từng thư mục A_xx
+    for subject in subject_dirs:
+        session_dir = f"/work/bigP3BCI-data/StudyA/{subject}/SE001"
+        
+        tr_list = edf_list(session_dir, "Train")
+        te_list = edf_list(session_dir, "Test")
+        if not tr_list or not te_list:
+            print(f"Không tìm thấy EDF Train/Test trong {session_dir}")
+            continue
+        
+        print(f"Processing {session_dir}")
+        
+        Xtr_raw, ytr, info, tmin_epo, sf = build_epochs(tr_list, decim=args.decim,
+            max_epochs=args.max_epochs_train, max_files=args.max_files_train)
+        Xte_raw, yte, _, _, _ = build_epochs(te_list, decim=args.decim,
+            max_epochs=args.max_epochs_test,  max_files=args.max_files_test)
 
-    # BẮT BUỘC: ép kiểu int cho nhãn
-    ytr = ytr.astype(np.int32)
-    yte = yte.astype(np.int32)
+        # BẮT BUỘC: ép kiểu int cho nhãn
+        ytr = ytr.astype(np.int32)
+        yte = yte.astype(np.int32)
 
-    # events: ép int cho toàn bộ mảng
-    events_tr = np.column_stack([
-        np.arange(len(ytr), dtype=np.int32),
-        np.zeros(len(ytr), dtype=np.int32),
-        ytr
-    ]).astype(np.int32)
-    event_id = {"non":0, "target":1}
+        # events: ép int cho toàn bộ mảng
+        events_tr = np.column_stack([
+            np.arange(len(ytr), dtype=np.int32),
+            np.zeros(len(ytr), dtype=np.int32),
+            ytr
+        ]).astype(np.int32)
+        event_id = {"non":0, "target":1}
 
-    events_te = np.column_stack([
-        np.arange(len(yte), dtype=np.int32),
-        np.zeros(len(yte), dtype=np.int32),
-        yte
-    ]).astype(np.int32)
+        events_te = np.column_stack([
+            np.arange(len(yte), dtype=np.int32),
+            np.zeros(len(yte), dtype=np.int32),
+            yte
+        ]).astype(np.int32)
 
-    ep_tr = mne.EpochsArray(Xtr_raw, info=info, events=events_tr, event_id=event_id, tmin=tmin_epo, verbose=False)
-    ep_te = mne.EpochsArray(Xte_raw, info=info, events=events_te, event_id=event_id, tmin=tmin_epo, verbose=False)
+        ep_tr = mne.EpochsArray(Xtr_raw, info=info, events=events_tr, event_id=event_id, tmin=tmin_epo, verbose=False)
+        ep_te = mne.EpochsArray(Xte_raw, info=info, events=events_te, event_id=event_id, tmin=tmin_epo, verbose=False)
 
-    xd = Xdawn(n_components=args.ncomp, reg=0.1)
-    xd.fit(ep_tr)
-    Etr = xd.transform(ep_tr)
-    Ete = xd.transform(ep_te)
+        xd = Xdawn(n_components=args.ncomp, reg=0.1)
+        xd.fit(ep_tr)
+        Etr = xd.transform(ep_tr)
+        Ete = xd.transform(ep_te)
 
-    Ftr = feats_from_epo(Etr, args.ncomp, tmin_epo, sf, args.t0, args.t1, args.win, args.step)
-    Fte = feats_from_epo(Ete, args.ncomp, tmin_epo, sf, args.t0, args.t1, args.win, args.step)
+        Ftr = feats_from_epo(Etr, args.ncomp, tmin_epo, sf, args.t0, args.t1, args.win, args.step)
+        Fte = feats_from_epo(Ete, args.ncomp, tmin_epo, sf, args.t0, args.t1, args.win, args.step)
 
-    np.savez_compressed(out/"train_features.npz", X=Ftr, y=ytr)
-    np.savez_compressed(out/"test_features.npz",  X=Fte, y=yte)
-    meta = {"sfreq": sf, "tmin": tmin_epo, "ncomp": args.ncomp, "t0": args.t0, "t1": args.t1,
-            "win": args.win, "step": args.step, "decim": args.decim}
-    (out/"features_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
-    print("Saved:", out/"train_features.npz", out/"test_features.npz")
-    print("Train:", Ftr.shape, " Test:", Fte.shape, " Pos-rate:", ytr.mean(), yte.mean())
+        np.savez_compressed(out/"train_features.npz", X=Ftr, y=ytr)
+        np.savez_compressed(out/"test_features.npz",  X=Fte, y=yte)
+        meta = {"sfreq": sf, "tmin": tmin_epo, "ncomp": args.ncomp, "t0": args.t0, "t1": args.t1,
+                "win": args.win, "step": args.step, "decim": args.decim}
+        (out/"features_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        print("Saved:", out/"train_features.npz", out/"test_features.npz")
+        print("Train:", Ftr.shape, " Test:", Fte.shape, " Pos-rate:", ytr.mean(), yte.mean())
 
 if __name__ == "__main__":
     main()
-
