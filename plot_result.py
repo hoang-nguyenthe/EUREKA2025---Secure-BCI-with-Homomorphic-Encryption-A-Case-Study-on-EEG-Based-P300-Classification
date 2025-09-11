@@ -1,17 +1,44 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
+from sklearn.metrics import confusion_matrix, classification_report
+from joblib import load
+import numpy as np  # Đảm bảo rằng NumPy được import
 
+# Đọc tệp kết quả từ CSV
 CSV = Path("artifacts/summary_all.csv")
 OUT_DIR = Path("artifacts")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def pick(df, pattern):
+    """Tìm và trả về tên cột chứa pattern (case-insensitive)"""
     pattern = pattern.lower()
     for c in df.columns:
         if pattern in c.lower():
             return c
     raise KeyError(f"Không tìm thấy cột chứa '{pattern}' trong {list(df.columns)}")
+
+def plot_confusion_matrix(cm, labels, title="Confusion Matrix"):
+    """Vẽ và hiển thị confusion matrix"""
+    plt.figure(figsize=(6, 6))
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = range(len(labels))
+    plt.xticks(tick_marks, labels)
+    plt.yticks(tick_marks, labels)
+
+    # Đặt nhãn cho ma trận nhầm lẫn
+    thresh = cm.max() / 2.
+    for i in range(len(labels)):
+        for j in range(len(labels)):
+            plt.text(j, i, format(cm[i, j], 'd'),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black")
+
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.tight_layout()
 
 def main():
     if not CSV.exists():
@@ -47,57 +74,67 @@ def main():
     # Sắp xếp cho đẹp
     df = df.sort_values([col_keybits, col_n]).reset_index(drop=True)
 
-    # 1) Plot AUC theo N (mỗi đường là một key size)
-    plt.figure()
-    for kb, g in df.groupby(col_keybits):
-        plt.plot(g[col_n], g[col_auc_pl], 'o-', label=f'Plain AUC (kb={kb})')
-        plt.plot(g[col_n], g[col_auc_he], 's--', label=f'HE AUC (kb={kb})')
-    plt.xlabel('Số đặc trưng N')
-    plt.ylabel('AUC')
-    plt.title('AUC: Plain vs HE (theo N, nhóm theo keybits)')
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(OUT_DIR / 'auc_vs_n_by_keybits.png', dpi=150)
+    # Lặp qua tất cả các thư mục A_xx (A_01 đến A_19)
+    subject_dirs = [f"A_{str(i).zfill(2)}" for i in range(1, 20)]  # A_01 đến A_19
 
-    # 2) Plot ACC@opt theo N
-    plt.figure()
-    for kb, g in df.groupby(col_keybits):
-        plt.plot(g[col_n], g[col_acc_pl], 'o-', label=f'Plain ACC@opt (kb={kb})')
-        plt.plot(g[col_n], g[col_acc_he], 's--', label=f'HE ACC@opt (kb={kb})')
-    plt.xlabel('Số đặc trưng N')
-    plt.ylabel('Accuracy @ threshold tối ưu')
-    plt.title('ACC@opt: Plain vs HE (theo N, nhóm theo keybits)')
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(OUT_DIR / 'acc_vs_n_by_keybits.png', dpi=150)
+    for subject in subject_dirs:
+        # Đọc tệp features cho mỗi thư mục A_xx
+        features_file = OUT_DIR / f"{subject}_test_features.npz"
+        if not features_file.exists():
+            print(f"Không tìm thấy tệp {features_file}, bỏ qua {subject}.")
+            continue
 
-    # 3) Plot thời gian/inference theo key size (lấy N cố định tốt nhất nếu có)
-    plt.figure()
-    for kb, g in df.groupby(col_keybits):
-        plt.plot(g[col_n], g[col_tps], 'o-', label=f'kb={kb}')
-    plt.xlabel('Số đặc trưng N')
-    plt.ylabel('Thời gian / mẫu (s)')
-    plt.title('Chi phí suy luận HE theo N và keybits')
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(OUT_DIR / 'time_per_sample_by_n_and_keybits.png', dpi=150)
+        # Đọc dữ liệu và mô hình cho từng subject
+        model_file = OUT_DIR / f"{subject}_model_best.joblib"
+        model = load(model_file)
+        data = np.load(features_file)
+        Xte, yte = data["X"], data["y"]
 
-    # 4) Xuất 1 summary markdown ngắn
-    md = []
-    md.append("# Biểu đồ tổng hợp kết quả\n")
-    md.append(f"- Nguồn dữ liệu: `{CSV}`\n")
-    md.append("- Hình ảnh đã lưu:\n")
-    md.append("  - `artifacts/auc_vs_n_by_keybits.png`\n")
-    md.append("  - `artifacts/acc_vs_n_by_keybits.png`\n")
-    md.append("  - `artifacts/time_per_sample_by_n_and_keybits.png`\n")
-    (OUT_DIR / "summary_plots.md").write_text("\n".join(md), encoding="utf-8")
+        # Dự đoán trên tập kiểm tra
+        y_pred = model.predict(Xte)
+        cm = confusion_matrix(yte, y_pred)
 
-    print("# Ảnh và summary_plots.md nằm trong artifacts/")
-    print((OUT_DIR / "summary_plots.md").read_text(encoding="utf-8"))
+        # Vẽ và lưu confusion matrix
+        plot_confusion_matrix(cm, labels=["Non-target", "Target"], title=f"Confusion Matrix for {subject}")
+        plt.savefig(OUT_DIR / f"{subject}_confusion_matrix.png", dpi=150)
+        
+        # In ra classification report và confusion matrix
+        print(f"\nConfusion Matrix for {subject}:")
+        print(cm)
+        print(f"Classification Report for {subject}:")
+        print(classification_report(yte, y_pred))
+
+        # Lưu classification report vào tệp
+        with open(OUT_DIR / f"{subject}_classification_report.txt", "w") as f:
+            f.write(f"Confusion Matrix for {subject}:\n")
+            f.write(str(cm))
+            f.write(f"\n\nClassification Report for {subject}:\n")
+            f.write(classification_report(yte, y_pred))
+
+        # Lưu các biểu đồ tổng hợp
+        plt.figure()
+        for kb, g in df.groupby(col_keybits):
+            plt.plot(g[col_n], g[col_auc_pl], 'o-', label=f'Plain AUC (kb={kb})')
+            plt.plot(g[col_n], g[col_auc_he], 's--', label=f'HE AUC (kb={kb})')
+        plt.xlabel('Số đặc trưng N')
+        plt.ylabel('AUC')
+        plt.title(f'AUC for {subject} (Plain vs HE)')
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(OUT_DIR / f"{subject}_auc_vs_n_by_keybits.png", dpi=150)
+
+        # Tính toán thời gian và lưu biểu đồ
+        plt.figure()
+        for kb, g in df.groupby(col_keybits):
+            plt.plot(g[col_n], g[col_tps], 'o-', label=f'kb={kb}')
+        plt.xlabel('Số đặc trưng N')
+        plt.ylabel('Thời gian / mẫu (s)')
+        plt.title(f'Time per sample for {subject}')
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(OUT_DIR / f"{subject}_time_per_sample_by_n_and_keybits.png", dpi=150)
 
 if __name__ == "__main__":
     main()
-
