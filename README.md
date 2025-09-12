@@ -184,7 +184,7 @@ This will generate:
 
 ## 📊 Results (from `artifacts/summary_all.md`)
 
-### A) Consolidated HE vs plaintext (from `artifacts/summary_all.md`)
+### A) Result of plaintext
 
 | Subject | Accuracy | Precision | Recall | F1-score | Confusion Matrix                | AUC  |
 |---------|----------|-----------|--------|----------|----------------------------------|------|
